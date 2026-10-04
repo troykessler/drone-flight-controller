@@ -1,0 +1,33 @@
+[package]
+name = "drone-flight-controller"
+version = "0.1.0"
+authors = ["troykessler"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "drone-flight-controller"
+test = false
+bench = false
+
+[dependencies]
+cortex-m-rt = "0.7.5"
+embassy-executor = "0.10.0"
+embassy-rp = { version = "0.10.0", features = ["rp2040", "time-driver", "critical-section-impl", "executor-thread"] }
+embassy-time = "0.5.1"
+embassy-usb-logger = "0.6.0"
+log = "0.4"
+panic-halt = "1.0.0"
+
+# Optimize embedded firmware for size.
+[profile.dev]
+panic = "abort"
+lto = true
+opt-level = "s"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+debug = true
+lto = true
+opt-level = "s"
