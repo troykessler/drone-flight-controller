@@ -32,22 +32,22 @@ async fn main(spawner: Spawner) {
     spawner.spawn(serial_task(Driver::new(p.USB, Irqs)).unwrap());
 
     let mut gyro = Gyro::new(p.I2C0, p.PIN_5, p.PIN_4);
+    let _ = gyro.calibrate().await;
 
     let mut loop_timer = Ticker::every(Duration::from_micros(2_500));
 
     loop {
-        if let Ok(data) = gyro.read_gyro_and_acc().await {
-            log::info!(
+        match gyro.read_gyro_and_acc().await {
+            Ok(data) => log::info!(
                 "gyro: X={:.1} Y={:.1} Z={:.1} deg/s, acc: X={:.2} Y={:.2} Z={:.2} g",
                 data.gyro_x,
                 data.gyro_y,
                 data.gyro_z,
                 data.acc_x,
                 data.acc_y,
-                data.acc_z
-            );
-        } else {
-            log::warn!("GY-521 read failed");
+                data.acc_z,
+            ),
+            Err(error) => log::warn!("GY-521 read failed: {:?}", error),
         }
 
         loop_timer.next().await;
