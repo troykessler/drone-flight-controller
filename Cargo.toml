@@ -14,10 +14,12 @@ bench = false
 cortex-m-rt = "0.7.5"
 embassy-executor = "0.10.0"
 embassy-rp = { version = "0.10.0", features = ["rp2040", "time-driver", "critical-section-impl", "executor-thread"] }
+embassy-sync = "0.8.0"
 embassy-time = "0.5.1"
 embassy-usb-logger = "0.6.0"
 log = "0.4"
 panic-halt = "1.0.0"
+uf-crsf = "0.7.0"
 
 # Optimize embedded firmware for size.
 [profile.dev]
