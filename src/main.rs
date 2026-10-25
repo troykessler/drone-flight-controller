@@ -1,7 +1,10 @@
 #![no_std]
 #![no_main]
 
-mod gyro;
+// mod gyro;
+mod motor;
+
+use motor::Motor;
 
 use embassy_executor::Spawner;
 use embassy_rp::{
@@ -9,8 +12,7 @@ use embassy_rp::{
     peripherals::USB,
     usb::Driver,
 };
-use embassy_time::{Duration, Ticker};
-use gyro::Gyro;
+use embassy_time::{Timer};
 use panic_halt as _;
 
 bind_interrupts!(struct Irqs {
@@ -28,28 +30,22 @@ async fn serial_task(driver: Driver<'static, USB>) {
     entry = "cortex_m_rt::entry"
 )]
 async fn main(spawner: Spawner) {
+    // pin 4,5 -> gyro
+    // pin 6,8,10,12 -> esc
     let p = embassy_rp::init(Default::default());
     spawner.spawn(serial_task(Driver::new(p.USB, Irqs)).unwrap());
 
-    let mut gyro = Gyro::new(p.I2C0, p.PIN_5, p.PIN_4);
-    let _ = gyro.calibrate().await;
-
-    let mut loop_timer = Ticker::every(Duration::from_micros(2_500));
+    // https://pip-assets.raspberrypi.com/categories/814-rp2040/documents/RP-008371-DS-1-rp2040-datasheet.pdf#page=13
+    let mut motor_1 = Motor::new(p.PWM_SLICE3, p.PIN_6);
+    // let mut motor_2 = Motor::new(p.PWM_SLICE4, p.PIN_8);
+    // let mut motor_3 = Motor::new(p.PWM_SLICE5, p.PIN_10);
+    // let mut motor_4 = Motor::new(p.PWM_SLICE6, p.PIN_12);
 
     loop {
-        match gyro.read_gyro_and_acc().await {
-            Ok(data) => log::info!(
-                "gyro: X={:.1} Y={:.1} Z={:.1} deg/s, acc: X={:.2} Y={:.2} Z={:.2} g",
-                data.gyro_x,
-                data.gyro_y,
-                data.gyro_z,
-                data.acc_x,
-                data.acc_y,
-                data.acc_z,
-            ),
-            Err(error) => log::warn!("GY-521 read failed: {:?}", error),
+        for throttle in 0..1024 {
+            motor_1.set_throttle(throttle);
+            log::info!("throttle: {}", motor_1.get_throttle());
+            Timer::after_millis(3).await;
         }
-
-        loop_timer.next().await;
     }
 }
